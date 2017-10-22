@@ -11,7 +11,7 @@ import Foundation
 import SourceKittenFramework
 
 public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderRule {
-    public var configuration = SeverityConfiguration(.warning)
+    public var configuration = SpellingConfiguration()
 
     public init() {}
 
@@ -34,9 +34,7 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
             let description = Swift.type(of: self).description
             let type = self.type(for: kind)
 
-            let isFunction = SwiftDeclarationKind.functionKinds.contains(kind)
-            let tokensInName = isFunction ? extractFunctionName(from: name).camelCaseTokens : name.camelCaseTokens
-
+            let tokensInName = extractTokens(from: name, ofKind: kind)
             if isMisspelled(tokensInName.joined(separator: " ")) {
                 let misspelledWords = findMisspelledWords(in: tokensInName)
                     .map { "'\($0)'" }
@@ -54,10 +52,6 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
         } ?? []
     }
 
-    private func extractFunctionName(from string: String) -> String {
-        return string.components(separatedBy: "(").first ?? string
-    }
-
     private func validateName(dictionary: [String: SourceKitRepresentable],
                               kind: SwiftDeclarationKind) -> (name: String, offset: Int)? {
         guard let name = dictionary.name,
@@ -69,12 +63,23 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
         return (name.nameStrippingLeadingUnderscoreIfPrivate(dictionary), offset)
     }
 
+    private func extractTokens(from name: String, ofKind kind: SwiftDeclarationKind) -> [String] {
+        let isFunction = SwiftDeclarationKind.functionKinds.contains(kind)
+        let tokens = isFunction ? extractFunctionName(from: name).camelCaseTokens : name.camelCaseTokens
+        return tokens.filter { !configuration.excluded.contains($0.lowercased()) }
+    }
+
+    private func extractFunctionName(from string: String) -> String {
+        return string.components(separatedBy: "(").first ?? string
+    }
+
     private func isMisspelled(_ string: String) -> Bool {
         guard !string.isEmpty else {
             return false
         }
 
         let checker = NSSpellChecker.shared()
+        checker.setLanguage(configuration.language)
         let misspelledRange = checker.checkSpelling(of: string, startingAt: 0)
         return misspelledRange.location != NSNotFound
     }
