@@ -103,6 +103,10 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
 }
 
 private extension String {
+    var isNumeric: Bool {
+        return CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: self))
+    }
+
     var camelCaseTokens: [String] {
         guard !self.isEmpty else {
             return []
@@ -113,6 +117,10 @@ private extension String {
 
         for scalar in self.unicodeScalars {
             if CharacterSet.uppercaseLetters.contains(scalar), !token.isEmpty {
+                tokens.append(token)
+                token = ""
+            }
+            if CharacterSet.decimalDigits.contains(scalar), !token.isNumeric {
                 tokens.append(token)
                 token = ""
             }
