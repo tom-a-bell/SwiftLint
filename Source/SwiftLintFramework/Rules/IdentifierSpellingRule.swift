@@ -89,11 +89,20 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
     }
 
     private let kinds: Set<SwiftDeclarationKind> = {
-        return SwiftDeclarationKind.variableKinds
+        return SwiftDeclarationKind.typeKinds
             .union(SwiftDeclarationKind.functionKinds)
+            .union(SwiftDeclarationKind.variableKinds)
     }()
 
     private func type(for kind: SwiftDeclarationKind) -> String {
+        if SwiftDeclarationKind.typeKinds.contains(kind) {
+            switch kind {
+            case .typealias: return "Type alias"
+            case .struct: return "Struct"
+            case .enum: return "Enum"
+            default: return "Class"
+            }
+        }
         if SwiftDeclarationKind.functionKinds.contains(kind) {
             return "Function"
         } else {
