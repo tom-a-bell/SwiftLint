@@ -34,16 +34,21 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
             let description = Swift.type(of: self).description
             let type = self.type(for: kind)
 
-            let tokensInName = extractTokens(from: name, ofKind: kind)
+            let tokensInName = extractTokens(from: name)
             if isMisspelled(tokensInName.joined(separator: " ")) {
                 let misspelledWords = findMisspelledWords(in: tokensInName)
-                    .map { "'\($0)'" }
-                    .joined(separator: ", ")
-                let reason = "\(type) '\(name)' contains incorrectly spelled word(s): \(misspelledWords)"
+                let wordsToCorrect = misspelledWords.map { "'\($0)'" }.joined(separator: ", ")
+                let reason = "\(type) '\(name)' contains incorrectly spelled word(s): \(wordsToCorrect)"
+
+                var firstSpellingErrorOffset = offset
+                if let range = name.range(of: misspelledWords.first!) {
+                    firstSpellingErrorOffset += range.lowerBound.encodedOffset
+                }
+
                 return [
                     StyleViolation(ruleDescription: description,
                                    severity: .warning,
-                                   location: Location(file: file, byteOffset: offset),
+                                   location: Location(file: file, byteOffset: firstSpellingErrorOffset),
                                    reason: reason)
                 ]
             }
@@ -54,23 +59,33 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
 
     private func validateName(dictionary: [String: SourceKitRepresentable],
                               kind: SwiftDeclarationKind) -> (name: String, offset: Int)? {
-        guard let name = dictionary.name,
-            let offset = dictionary.offset,
+        guard let name = extractName(from: dictionary, forKind: kind),
+            let offset = extractOffset(from: dictionary, forKind: kind),
             kinds.contains(kind) else {
                 return nil
         }
 
-        return (name.nameStrippingLeadingUnderscoreIfPrivate(dictionary), offset)
+        return (name, offset)
     }
 
-    private func extractTokens(from name: String, ofKind kind: SwiftDeclarationKind) -> [String] {
-        let isFunction = SwiftDeclarationKind.functionKinds.contains(kind)
-        let tokens = isFunction ? extractFunctionName(from: name).camelCaseTokens : name.camelCaseTokens
-        return tokens.filter { !configuration.excluded.contains($0.lowercased()) }
+    private func extractName(from dictionary: [String: SourceKitRepresentable],
+                             forKind kind: SwiftDeclarationKind) -> String? {
+        guard let name = dictionary.name else { return nil }
+        return kind.isFunction ? extractFunctionName(from: name) : name
+    }
+
+    private func extractOffset(from dictionary: [String: SourceKitRepresentable],
+                               forKind kind: SwiftDeclarationKind) -> Int? {
+        return kind.isParameter ? dictionary.offset : dictionary.nameOffset
     }
 
     private func extractFunctionName(from string: String) -> String {
         return string.components(separatedBy: "(").first ?? string
+    }
+
+    private func extractTokens(from name: String) -> [String] {
+        let tokens = name.camelCaseTokens
+        return tokens.filter { !configuration.excluded.contains($0.lowercased()) }
     }
 
     private func isMisspelled(_ string: String) -> Bool {
@@ -149,5 +164,15 @@ private extension String {
             }
             return result + [token]
         }
+    }
+}
+
+private extension SwiftDeclarationKind {
+    var isFunction: Bool {
+        return SwiftDeclarationKind.functionKinds.contains(self)
+    }
+
+    var isParameter: Bool {
+        return self == .varParameter
     }
 }

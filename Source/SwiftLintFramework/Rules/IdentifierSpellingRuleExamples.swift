@@ -24,10 +24,10 @@ internal struct IdentifierSpellingRuleExamples {
     ]
 
     static let triggeringExamples = [
-        "↓let myIncorectLet = 0",
-        "↓var myIncorectVariable = 0",
-        "private ↓let _mySeperateVariable = 0",
-        "↓func isOparator(name: String) -> Bool",
+        "let my↓IncorectLet = 0",
+        "var my↓IncorectVariable = 0",
+        "private let _my↓SeperateVariable = 0",
+        "func is↓Oparator(name: String) -> Bool",
         "func isEven(↓nuber: Int) -> Bool"
     ]
 }

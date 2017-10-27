@@ -36,7 +36,7 @@ public struct SpellingConfiguration: RuleConfiguration, Equatable {
         }
     }
 
-    public static func ==(lhs: SpellingConfiguration, rhs: SpellingConfiguration) -> Bool {
+    public static func == (lhs: SpellingConfiguration, rhs: SpellingConfiguration) -> Bool {
         return lhs.language == rhs.language &&
             zip(lhs.excluded, rhs.excluded).reduce(true) { $0 && ($1.0 == $1.1) }
     }
