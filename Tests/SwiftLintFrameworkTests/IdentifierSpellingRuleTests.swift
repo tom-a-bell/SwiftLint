@@ -18,23 +18,49 @@ class IdentifierSpellingRuleTests: XCTestCase {
     func testIdentifierSpellingWithExclusions() {
         let baseDescription = IdentifierSpellingRule.description
         let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [
-            "let lhs = 0",
-            "let mySdkVersion = 0",
-            "func == (lhs: SyntaxToken, rhs: SyntaxToken) -> Bool"
+            "let garp = 0",
+            "let myFoobar = 0",
+            "func == (firstGarp: SyntaxToken, secondGarp: SyntaxToken) -> Bool"
         ]
 
         let description = baseDescription.with(nonTriggeringExamples: nonTriggeringExamples)
-        verifyRule(description, ruleConfiguration: ["excluded": ["lhs", "rhs", "SDK"]])
+        verifyRule(description, ruleConfiguration: ["excluded": ["FOOBAR", "garp"]])
     }
 
     func testIdentifierSpellingWithExclusionsAndViolation() {
         let baseDescription = IdentifierSpellingRule.description
         let triggeringExamples = baseDescription.triggeringExamples + [
-            "let mySdk↓Verson = 0",
-            "func == (lhs↓Vilue: SyntaxToken, rhs↓Vilue: SyntaxToken) -> Bool"
+            "let myGarp↓Verson = 0",
+            "func == (garp↓Vilue: SyntaxToken, gurp↓Vilue: SyntaxToken) -> Bool"
         ]
 
         let description = baseDescription.with(triggeringExamples: triggeringExamples)
-        verifyRule(description, ruleConfiguration: ["excluded": ["lhs", "rhs", "SDK"]])
+        verifyRule(description, ruleConfiguration: ["excluded": ["garp", "gurp"]])
+    }
+
+    func testIdentifierSpellingWithMinWordLength() {
+        let baseDescription = IdentifierSpellingRule.description
+        let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [
+            "let otp = 0",
+            "let sdkVersion = 0",
+            "func == (lhs: SyntaxToken, rhs: SyntaxToken) -> Bool"
+        ]
+
+        let description = baseDescription.with(nonTriggeringExamples: nonTriggeringExamples)
+        verifyRule(description, ruleConfiguration: ["min_length": 4])
+    }
+
+    func testIdentifierSpellingWithMinWordLengthViolations() {
+        let baseDescription = IdentifierSpellingRule.description
+        let triggeringExamples = baseDescription.triggeringExamples + [
+            "let ↓otp = 0",
+            "let current↓SdkVersion = 0",
+            "func == (↓lhs: SyntaxToken, ↓rhs: SyntaxToken) -> Bool"
+        ]
+
+        let description = baseDescription
+            .with(nonTriggeringExamples: [])
+            .with(triggeringExamples: triggeringExamples)
+        verifyRule(description, ruleConfiguration: ["min_length": 2])
     }
 }

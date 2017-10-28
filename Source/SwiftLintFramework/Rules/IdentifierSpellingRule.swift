@@ -84,8 +84,7 @@ public struct IdentifierSpellingRule: ASTRule, OptInRule, ConfigurationProviderR
     }
 
     private func extractTokens(from name: String) -> [String] {
-        let tokens = name.camelCaseTokens
-        return tokens.filter { !configuration.excluded.contains($0.lowercased()) }
+        return name.camelCaseTokens.filter { $0.count >= configuration.minLength }
     }
 
     private func isMisspelled(_ string: String) -> Bool {

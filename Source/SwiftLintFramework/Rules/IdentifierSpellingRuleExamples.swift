@@ -19,14 +19,18 @@ internal struct IdentifierSpellingRuleExamples {
         "let XMLString: String? = nil",
         "override var i = 0",
         "enum Foo { case myEnum }",
+        "class MyClass: Comparable",
         "func isOperator(name: String) -> Bool",
-        "func typeForKind(_ kind: SwiftDeclarationKind) -> String"
+        "func typeForKind(_ kind: SwiftDeclarationKind) -> String",
+        "func == (lhs: SyntaxToken, rhs: SyntaxToken) -> Bool"
     ]
 
     static let triggeringExamples = [
         "let my↓IncorectLet = 0",
         "var my↓IncorectVariable = 0",
         "private let _my↓SeperateVariable = 0",
+        "enum ↓Friut { case banana }",
+        "class My↓Claas: Comparable",
         "func is↓Oparator(name: String) -> Bool",
         "func isEven(↓nuber: Int) -> Bool"
     ]
